@@ -31,9 +31,29 @@ FinPilot AI is an enterprise-grade LLM application designed to process complex f
 
 ## System Architecture
 
+```mermaid
+graph TD
+    subclass[User Interface Layer]
+    A[Next.js Client] -->|SSE Stream via HTTP/1.1| B(FastAPI Server)
+    B -->|Thread ID Validation| C{Auth & Security}
+    
+    subclass[Cognition Engine Layer]
+    C -- Valid --> D[LangGraph State Machine]
+    D <-->|Memory Persistence| E[(SQLite / PostgreSQL)]
+    D -->|Context Evaluation| F(Google Gemini LLM)
+    
+    subclass[Algorithmic Tool Layer]
+    F -- Action Requested --> G{Tool Executor}
+    G --> H[Market Data Fetcher]
+    G --> I[Markowitz Optimizer]
+    H --> D
+    I --> D
+```
+
 The application is decoupled into two primary domains to ensure structural integrity and scalability.
 
 ### 1. Cognition Engine (Backend)
+
 
 The backend replaces linear LLM generation with a cyclic graph capable of independent tool execution based on conditional evaluations.
 
@@ -47,6 +67,19 @@ The client is a dark-mode optimized Next.js interface designed to bridge the cog
 
 *   **Interface Parsing:** The application ingests the raw markdown output streamed from the agent and applies the `@tailwindcss/typography` plugin to convert complex responses into highly readable, structurally sound components.
 *   **Dynamic Layouts:** `framer-motion` manages dynamic layout transitions, gracefully expanding or contracting the UI when the agent actively streams its internal reasoning trace or invokes external data-fetching tools.
+
+---
+
+## Agentic Capabilities & Algorithmic Arsenal
+
+The agent is equipped with a suite of registered Python tools that it can execute autonomously to solve complex financial queries. Rather than acting as a static text predictor, the LLM identifies when external compute is required, drafts the parameters, and invokes the following models:
+
+1.  **Markowitz Mean-Variance Optimization (MVO):** 
+    *   **Mechanism:** When a user requests portfolio balancing, the agent invokes an internal Python mathematical sub-routine.
+    *   **Logic:** The tool computes the covariance matrix of expected returns and dynamically solves for the Optimal Sharpe Ratio or Minimum Variance Frontier based on the user's declared risk tolerance (Conservative, Moderate, Aggressive).
+2.  **Live Market Data Fetchers:**
+    *   **Mechanism:** Exposes the agent to real-time equity and asset price queries.
+    *   **Logic:** The agent autonomously identifies ticker symbols from natural language, retrieves current pricing matrices, and injects the live data back into the graph state to ensure all financial advice is based on up-to-the-minute conditions rather than stale model training data.
 
 ---
 

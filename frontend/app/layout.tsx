@@ -27,8 +27,9 @@ export default function RootLayout({
       lang="en"
       className={`${sora.variable} ${ibmPlexMono.variable} h-full antialiased dark`}
       style={{ colorScheme: "dark" }}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-neutral-950 text-neutral-100">{children}</body>
+      <body className="min-h-full flex flex-col bg-neutral-950 text-neutral-100" suppressHydrationWarning>{children}</body>
     </html>
   );
 }

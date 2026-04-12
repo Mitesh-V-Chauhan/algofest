@@ -1,16 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, FormEvent, KeyboardEvent } from 'react';
 import { 
-  Send, Sparkles, BrainCircuit, Activity, 
-  TrendingUp, Wallet, ShieldAlert, ChevronDown, 
-  ChevronRight, CircleUserRound, Clock, 
-  Menu, Plus
+  Send, Bot, User, Activity, ChevronRight, ChevronDown, 
+  Terminal, Sparkles, Zap, Key, Shield, ArrowRight, CornerDownLeft, Target, Infinity, Clock
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -71,20 +70,8 @@ function parseSSEEvent(rawChunk: string): ParsedSSEEvent | null {
   }
 }
 
-function shortText(value: unknown, maxLen = 140): string {
-  const text = String(value ?? '');
-  return text.length <= maxLen ? text : text.slice(0, maxLen) + '...';
-}
-
 function uid(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function isAgentMessage(message: ChatMessage): message is AgentMessage {
-  return message.role === 'agent';
 }
 
 function formatCurrency(value: number): string {
@@ -95,11 +82,10 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
-// Reusable animated dropdown for reasoning
+// Minimalist Reasoning Accordion
 function ReasoningTrace({ msg }: { msg: AgentMessage }) {
   const [isOpen, setIsOpen] = useState(msg.streaming);
 
-  // Auto-open when streaming
   useEffect(() => {
     if (msg.streaming) setIsOpen(true);
   }, [msg.streaming]);
@@ -110,137 +96,152 @@ function ReasoningTrace({ msg }: { msg: AgentMessage }) {
   if (!hasThinking && !hasTools && !msg.streaming) return null;
 
   return (
-    <div className="mt-4 overflow-hidden rounded-xl border border-white/5 bg-transparent border-white/5 transition-all duration-300 w-full mb-3">
+    <div className="my-2 border border-[#27272A] bg-[#121214] rounded-md overflow-hidden w-full max-w-[90%]">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between bg-white/[0.02] px-4 py-3 text-xs font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04]"
+        className="flex w-full items-center justify-between px-3 py-2 text-[11px] uppercase tracking-wider font-semibold text-[#A1A1AA] hover:text-[#E4E4E7] transition-colors bg-[#18181B]"
       >
         <div className="flex items-center gap-2">
           {msg.streaming ? (
-            <Activity className="h-3.5 w-3.5 animate-pulse text-neutral-400" />
+            <Activity className="h-3 w-3 animate-pulse text-[#3B82F6]" />
           ) : (
-            <BrainCircuit className="h-3.5 w-3.5 text-slate-400" />
+            <Terminal className="h-3 w-3 text-[#52525B]" />
           )}
-          <span className="uppercase tracking-widest">
-            {msg.streaming ? 'Agent Processing...' : 'Reasoning & Actions'}
-          </span>
+          <span>{msg.streaming ? 'Processing Request' : 'Execution Trace'}</span>
         </div>
-        {isOpen ? (
-          <ChevronDown className="h-4 w-4 text-slate-400" />
-        ) : (
-          <ChevronRight className="h-4 w-4 text-slate-400" />
-        )}
+        <div className="flex items-center gap-2">
+          {hasTools && !msg.streaming && <span className="bg-[#27272A] text-[#D4D4D8] px-1.5 py-0.5 rounded text-[10px] lowercase tracking-normal">{msg.tools.length} tool(s)</span>}
+          {isOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        </div>
       </button>
 
-      {isOpen && (
-        <div className="border-t border-slate-200/50 p-4 space-y-5 bg-[#18181B]/40 backdrop-blur-sm">
-          {/* Thinking phase */}
-          {hasThinking && (
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Thought Process</p>
-              <div className="font-mono text-[13px] leading-relaxed text-neutral-300 pl-3 border-l-2 border-indigo-200 whitespace-pre-wrap">
-                {msg.thinking}
-              </div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="border-t border-[#27272A] bg-[#09090B]"
+          >
+            <div className="p-3 space-y-3 font-mono text-[11px] text-[#A1A1AA]">
+              {msg.tools.map((tool, idx) => (
+                <div key={idx} className="flex items-start gap-2">
+                  <span className="text-[#3B82F6] shrink-0">▶</span>
+                  <span className="text-[#D4D4D8]">Executed: <span className="text-[#60A5FA]">{tool}</span></span>
+                </div>
+              ))}
+              
+              {msg.thinking && (
+                <div className="leading-relaxed whitespace-pre-wrap pl-3 border-l hover:border-[#3F3F46] border-[#27272A] transition-colors break-words">
+                  {msg.thinking}
+                </div>
+              )}
+              
+              {msg.streaming && !msg.thinking && !msg.tools.length && (
+                <div className="flex gap-1.5 items-center pl-3">
+                  <div className="h-1 w-1 bg-[#52525B] rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="h-1 w-1 bg-[#52525B] rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="h-1 w-1 bg-[#52525B] rounded-full animate-bounce"></div>
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Tools phase */}
-          {hasTools && (
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Executed Tools</p>
-              <div className="space-y-2">
-                {msg.tools.map((toolLine, idx) => (
-                  <div key={idx} className="flex items-start gap-2 bg-[#18181B] border border-slate-200 rounded-lg p-3 shadow-none">
-                    <Activity className="h-4 w-4 text-indigo-300 mt-0.5 shrink-0" />
-                    <p className="font-mono text-[11px] leading-loose text-neutral-300 break-all">{toolLine}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-export default function Home() {
+export default function ChatPage() {
   const [profile, setProfile] = useState<Profile | null>(null);
+  
+  // Form parsing state
+  const [formAge, setFormAge] = useState('30');
+  const [formIncome, setFormIncome] = useState('120000');
+  const [formSavings, setFormSavings] = useState('50000');
+  const [formRisk, setFormRisk] = useState('Moderate');
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const messagesRef = useRef<HTMLDivElement | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isSending, setIsSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const threadIdRef = useRef<string>(uid());
 
-  // Forms
-  const [age, setAge] = useState('');
-  const [income, setIncome] = useState('');
-  const [savings, setSavings] = useState('');
-  const [risk, setRisk] = useState('Medium');
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   useEffect(() => {
-    if (messagesRef.current) {
-      messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
-    }
-  }, [messages, loading]);
+    scrollToBottom();
+  }, [messages]);
 
   const handleProfileSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setProfile({
-      age: Number(age),
-      income: Number(income),
-      savings: Number(savings),
-      risk_tolerance: risk
+      age: parseInt(formAge) || 30,
+      income: parseInt(formIncome) || 0,
+      savings: parseInt(formSavings) || 0,
+      risk_tolerance: formRisk
     });
+
+    // Provide initial context to agent invisibly or setup greeting
     setMessages([
       {
         id: uid(),
         role: 'agent',
-        answer: "Welcome aboard. I'm your dedicated autonomous financial agent. Based on your profile, how can we optimize your wealth today?",
-        thinking: 'Profile captured securely. Waiting for user intent.',
+        answer: "Identity verified. I am FinPilot AI. Based on your injected parameters, how can we advance your financial objectives today?",
+        thinking: 'Profile ingested into memory. System ready.',
         tools: [],
-        status: 'Ready',
-        streaming: false,
-      },
+        status: 'idle',
+        streaming: false
+      }
     ]);
   };
 
-  const updateAgentMessage = (id: string, update: (message: AgentMessage) => AgentMessage) => {
-    setMessages((prev) =>
-      prev.map((msg) => {
-        if (!isAgentMessage(msg) || msg.id !== id) return msg;
-        return update(msg);
-      })
-    );
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+    }
   };
 
-  const handleChatSubmit = async (e?: React.FormEvent, customInput?: string) => {
-    if (e) e.preventDefault();
-    const userMsg = (customInput || input).trim();
-    if (!userMsg) return;
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleChatSubmit(e as unknown as FormEvent);
+    }
+  };
 
-    const userId = uid();
-    const agentId = uid();
+  const handleChatSubmit = async (e: FormEvent) => {
+    e?.preventDefault();
+    if (!input.trim() || isSending || !profile) return;
 
-    setMessages((prev) => [
-      ...prev,
-      { id: userId, role: 'user', content: userMsg },
-      {
-        id: agentId,
-        role: 'agent',
-        answer: '',
-        thinking: '',
-        tools: [],
-        status: 'Initializing stream...',
-        streaming: true,
-      },
-    ]);
+    const userMsg: UserMessage = {
+      id: uid(),
+      role: 'user',
+      content: input.trim(),
+    };
 
+    const agentMsg: AgentMessage = {
+      id: uid(),
+      role: 'agent',
+      answer: '',
+      thinking: '',
+      tools: [],
+      status: 'pending',
+      streaming: true,
+    };
+
+    setMessages((prev) => [...prev, userMsg, agentMsg]);
     setInput('');
-    setLoading(true);
+    setIsSending(true);
+    
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
 
     try {
-      // Use env variable in prod mapping to NEXT_PUBLIC_API_URL/chat/stream or fallback to local
       const apiUrl = process.env.NEXT_PUBLIC_API_URL 
         ? `${process.env.NEXT_PUBLIC_API_URL}/chat/stream` 
         : 'http://localhost:8000/api/v1/chat/stream';
@@ -248,353 +249,286 @@ export default function Home() {
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMsg,
-          profile: profile
-        })
+        body: JSON.stringify({ 
+          message: userMsg.content,
+          thread_id: threadIdRef.current 
+        }),
       });
 
-      if (!res.ok || !res.body) throw new Error('Stream failed');
+      if (!res.body) throw new Error('No readable stream returned.');
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = '';
+      let done = false;
 
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) break;
+      while (!done) {
+        const { value, done: readerDone } = await reader.read();
+        done = readerDone;
 
-        buffer += decoder.decode(value, { stream: true });
-        const chunks = buffer.split('\n\n');
-        buffer = chunks.pop() ?? '';
+        if (value) {
+          const chunk = decoder.decode(value, { stream: true });
+          const rawEvents = chunk.split('\n\n').filter(Boolean);
 
-        for (const rawChunk of chunks) {
-          const parsed = parseSSEEvent(rawChunk);
-          if (!parsed) continue;
+          setMessages((prev) => {
+            const newMsgs = [...prev];
+            const lastIdx = newMsgs.length - 1;
+            const target = newMsgs[lastIdx];
 
-          switch (parsed.event) {
-            case 'status':
-              updateAgentMessage(agentId, (m) => ({ ...m, status: String(parsed.data.text) }));
-              break;
-            case 'thinking_delta':
-              updateAgentMessage(agentId, (m) => ({ 
-                ...m, 
-                thinking: m.thinking + String(parsed.data.text || '') 
-              }));
-              break;
-            case 'answer_delta':
-              updateAgentMessage(agentId, (m) => ({ 
-                ...m, 
-                answer: m.answer + String(parsed.data.text || '') 
-              }));
-              break;
-            case 'tool_start':
-              updateAgentMessage(agentId, (m) => ({ 
-                ...m, 
-                tools: [...m.tools, `Started ${parsed.data.tool} | Input: ${shortText(parsed.data.input, 60)}`] 
-              }));
-              break;
-            case 'tool_end':
-              updateAgentMessage(agentId, (m) => ({ 
-                ...m, 
-                tools: [...m.tools, `Finished ${parsed.data.tool} | Output: ${shortText(parsed.data.output, 60)}`] 
-              }));
-              break;
-            case 'final':
-              updateAgentMessage(agentId, (m) => ({
-                ...m,
-                answer: parsed.data.answer ? String(parsed.data.answer) : m.answer,
-                status: 'Complete',
-                streaming: false
-              }));
-              break;
-            case 'error':
-              updateAgentMessage(agentId, (m) => ({ 
-                ...m, 
-                answer: String(parsed.data.message), 
-                status: 'Failed', 
-                streaming: false 
-              }));
-              break;
-            case 'done':
-              updateAgentMessage(agentId, (m) => ({ ...m, streaming: false, status: 'Complete' }));
-              break;
-          }
+            if (target.role !== 'agent') return newMsgs;
+
+            const updatedMsg = { ...target };
+
+            for (const raw of rawEvents) {
+              const parsed = parseSSEEvent(raw);
+              if (!parsed) continue;
+
+              const { event, data } = parsed;
+              const text = (data.text as string) || '';
+
+              if (event === 'answer_delta') updatedMsg.answer += text;
+              else if (event === 'thinking_delta') updatedMsg.thinking += text;
+              else if (event === 'tool_start') updatedMsg.tools = [...updatedMsg.tools, data.tool as string];
+              else if (event === 'status') updatedMsg.status = text;
+            }
+
+            newMsgs[lastIdx] = updatedMsg;
+            return newMsgs;
+          });
         }
       }
-      updateAgentMessage(agentId, (m) => ({ ...m, streaming: false }));
     } catch (error) {
-      console.error(error);
-      updateAgentMessage(agentId, (m) => ({
-        ...m,
-        answer: 'Connection error while streaming. Please try again.',
-        status: 'Failed',
-        streaming: false,
-      }));
+      console.error('Chat error:', error);
+      setMessages((prev) => {
+        const newMsgs = [...prev];
+        const lastIdx = newMsgs.length - 1;
+        const target = newMsgs[lastIdx];
+        if (target.role === 'agent') {
+          newMsgs[lastIdx] = { ...target, answer: target.answer + '\n\n**[Connection Error]** Failed to retrieve secure stream.' };
+        }
+        return newMsgs;
+      });
     } finally {
-      setLoading(false);
+      setMessages((prev) => {
+        const newMsgs = [...prev];
+        const lastIdx = newMsgs.length - 1;
+        const target = newMsgs[lastIdx];
+        if (target.role === 'agent') {
+          newMsgs[lastIdx] = { ...target, streaming: false };
+        }
+        return newMsgs;
+      });
+      setIsSending(false);
     }
   };
 
-  // --- Onboarding Screen ---
+  // View: Onboarding Profile Setup
   if (!profile) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4 bg-[#18181B] border border-white/10 mb-2 relative overflow-hidden font-sans">
-        {/* Background Accents */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-md bg-indigo-500/50/100/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-md bg-cyan-500/10 blur-3xl pointer-events-none" />
-
-        <div className="relative z-10 w-full max-w-lg rounded-[2rem] border border-white bg-[#18181B]/60 backdrop-blur-2xl p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] shadow-indigo-500/5">
-          <div className="inline-flex items-center justify-center rounded-xl bg-indigo-500/50/10/80 border border-indigo-500/10 p-4 mb-6 shadow-none">
-            <Sparkles className="h-7 w-7 text-indigo-300" />
+      <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center p-4 selection:bg-[#27272A] text-[#FAFAFA] font-sans">
+        <div className="max-w-md w-full bg-[#121214] border border-[#27272A] rounded-2xl shadow-2xl p-8 animate-in fade-in zoom-in-95 duration-700">
+          <div className="w-10 h-10 rounded-xl bg-[#27272A] border border-[#3F3F46] flex items-center justify-center mb-6">
+            <Target className="w-5 h-5 text-[#FAFAFA]" />
           </div>
-          <h1 className="text-3xl font-extrabold text-neutral-100 tracking-tight">FinPilot AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Agent</span></h1>
-          <p className="mt-3 text-neutral-400 leading-relaxed font-medium">Calibrate your autonomous financial engine. Set your baseline to unlock personalized wealth strategies.</p>
+          <h2 className="text-xl font-medium tracking-tight text-[#FAFAFA] mb-2">Configure Baseline</h2>
+          <p className="text-sm text-[#A1A1AA] mb-8 leading-relaxed">Establish your financial profile before initiating the advisory matrix.</p>
           
-          <form onSubmit={handleProfileSubmit} className="mt-8 space-y-5">
-            <div className="grid grid-cols-2 gap-5">
-              <div>
-                <label className="block text-[11px] font-bold mb-2 uppercase tracking-widest text-neutral-400">Current Age</label>
-                <div className="relative">
-                  <input type="number" required value={age} onChange={e => setAge(e.target.value)} className="w-full rounded-xl border border-slate-200/80 bg-[#18181B]/80 px-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium shadow-none hover:border-slate-300" placeholder="e.g. 28" />
-                </div>
+          <form onSubmit={handleProfileSubmit} className="space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#A1A1AA]">Age</label>
+                <input 
+                  type="number" value={formAge} onChange={e => setFormAge(e.target.value)} required min={18}
+                  className="w-full bg-[#09090B] border border-[#27272A] rounded-lg px-3 py-2 text-sm text-[#FAFAFA] placeholder:text-[#52525B] focus:outline-none focus:border-[#52525B] transition-colors" 
+                />
               </div>
-              <div>
-                <label className="block text-[11px] font-bold mb-2 uppercase tracking-widest text-neutral-400">Risk Profile</label>
-                <div className="relative">
-                  <select value={risk} onChange={e => setRisk(e.target.value)} className="w-full rounded-xl border border-slate-200/80 bg-[#18181B]/80 px-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium appearance-none shadow-none hover:border-slate-300">
-                    <option value="Low">Conservative</option>
-                    <option value="Medium">Balanced</option>
-                    <option value="High">Aggressive</option>
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-bold mb-2 uppercase tracking-widest text-neutral-400">Annual Income</label>
-              <div className="relative flex items-center">
-                <span className="absolute left-4 text-slate-400 font-medium">$</span>
-                <input type="number" required value={income} onChange={e => setIncome(e.target.value)} className="w-full rounded-xl border border-slate-200/80 bg-[#18181B]/80 pl-8 pr-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium shadow-none hover:border-slate-300" placeholder="120,000" />
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-semibold uppercase tracking-wider text-[#A1A1AA]">Risk Tolerance</label>
+                <select 
+                  value={formRisk} onChange={e => setFormRisk(e.target.value)}
+                  className="w-full bg-[#09090B] border border-[#27272A] rounded-lg px-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#52525B] transition-colors appearance-none"
+                >
+                  <option>Conservative</option>
+                  <option>Moderate</option>
+                  <option>Aggressive</option>
+                </select>
               </div>
             </div>
 
-            <div>
-              <label className="block text-[11px] font-bold mb-2 uppercase tracking-widest text-neutral-400">Liquid Savings</label>
-              <div className="relative flex items-center">
-                <span className="absolute left-4 text-slate-400 font-medium">$</span>
-                <input type="number" required value={savings} onChange={e => setSavings(e.target.value)} className="w-full rounded-xl border border-slate-200/80 bg-[#18181B]/80 pl-8 pr-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium shadow-none hover:border-slate-300" placeholder="45,000" />
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[#A1A1AA]">Annual Income (USD)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#52525B]">$</span>
+                <input 
+                  type="number" value={formIncome} onChange={e => setFormIncome(e.target.value)} required min={0}
+                  className="w-full bg-[#09090B] border border-[#27272A] rounded-lg pl-7 pr-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#52525B] transition-colors" 
+                />
               </div>
             </div>
 
-            <div className="pt-2">
-              <button type="submit" className="w-full rounded-xl bg-slate-900 py-4 font-bold tracking-wide text-white transition-all hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98] flex items-center justify-center gap-2">
-                Deploy Agent <ChevronRight className="h-4 w-4" />
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-wider text-[#A1A1AA]">Current Capital (USD)</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#52525B]">$</span>
+                <input 
+                  type="number" value={formSavings} onChange={e => setFormSavings(e.target.value)} required min={0}
+                  className="w-full bg-[#09090B] border border-[#27272A] rounded-lg pl-7 pr-3 py-2 text-sm text-[#FAFAFA] focus:outline-none focus:border-[#52525B] transition-colors" 
+                />
+              </div>
+            </div>
+
+            <div className="pt-4">
+              <button 
+                type="submit" 
+                className="w-full flex items-center justify-center gap-2 bg-[#FAFAFA] hover:bg-[#E4E4E7] text-[#09090B] font-medium text-sm rounded-lg py-2.5 transition-colors focus:ring-2 focus:ring-white/20 focus:outline-none"
+              >
+                Assemble Workspace <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </form>
         </div>
-      </main>
+      </div>
     );
   }
 
-  // --- Main Chat App ---
+  // View: Active Agent Workspace
   return (
-    <div className="flex h-screen bg-[#FDFDFE] text-neutral-100 overflow-hidden font-sans">
-      
-      {/* Sidebar */}
-      <aside className={cn("flex flex-col bg-transparent border-white/5 border-r border-slate-200 transition-all duration-300 z-20", sidebarOpen ? "w-72" : "w-0 opacity-0 overflow-hidden border-none")}>
-        <div className="p-4 flex items-center gap-3 border-b border-slate-200 px-6 h-[72px] shrink-0 bg-[#09090B] backdrop-blur-sm">
-          <div className="h-8 w-8 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-none shadow-indigo-600/20">
-            <Sparkles className="h-4 w-4 text-white" />
+    <div className="flex h-screen bg-[#09090B] text-[#FAFAFA] font-sans selection:bg-[#27272A]">
+      {/* Sidebar - Profile Status */}
+      <aside className="hidden md:flex flex-col w-64 bg-[#121214] border-r border-[#27272A]">
+        <div className="p-4 border-b border-[#27272A] flex items-center gap-2.5">
+          <div className="w-6 h-6 rounded bg-[#27272A] flex items-center justify-center border border-[#3F3F46]">
+            <Infinity className="w-3.5 h-3.5 text-[#FAFAFA]" />
           </div>
-          <span className="font-bold text-neutral-200 tracking-tight text-lg">FinPilot AI.ai</span>
+          <span className="font-semibold text-[13px] tracking-tight">FinPilot AI</span>
         </div>
-        
-        <div className="flex-1 overflow-y-auto p-5 scrollbar-hide">
-          <div className="mb-8">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 px-1">Active Profile</p>
-            <div className="bg-[#18181B] border border-slate-200/80 rounded-xl p-3.5 shadow-none space-y-3">
-              <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-                <ShieldAlert className="h-4 w-4 text-indigo-300" />
-                <span>{profile.risk_tolerance} Risk</span>
+
+        <div className="flex-1 p-4 overflow-y-auto">
+          <div className="mb-6">
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-[#71717A] mb-3">Active Session</h3>
+            <div className="flex items-center gap-3 p-3 bg-[#18181B] border border-[#27272A] rounded-lg">
+              <div className="w-8 h-8 rounded-full bg-[#27272A] border border-[#3F3F46] flex items-center justify-center shrink-0">
+                <User className="w-4 h-4 text-[#A1A1AA]" />
               </div>
-              <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-                <Wallet className="h-4 w-4 text-indigo-300" />
-                <span>{formatCurrency(profile.savings)} Cap</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-                <TrendingUp className="h-4 w-4 text-indigo-300" />
-                <span>{formatCurrency(profile.income)}/yr</span>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[13px] font-medium text-[#FAFAFA] truncate">User {threadIdRef.current.slice(-4)}</span>
+                <span className="text-[11px] text-[#A1A1AA] flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Connected
+                </span>
               </div>
             </div>
           </div>
 
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 px-1">Recent Scenarios</p>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-neutral-300 hover:bg-slate-200/50 hover:text-neutral-100 rounded-xl transition-colors text-left group">
-              <Clock className="h-4 w-4 text-slate-400 group-hover:text-indigo-300 transition-colors" />
-              <span className="truncate">AAPL Q3 Earnings</span>
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-neutral-300 hover:bg-slate-200/50 hover:text-neutral-100 rounded-xl transition-colors text-left mt-1 group">
-              <Clock className="h-4 w-4 text-slate-400 group-hover:text-indigo-300 transition-colors" />
-              <span className="truncate">House Downpayment</span>
-            </button>
+            <h3 className="text-[10px] font-bold uppercase tracking-wider text-[#71717A] mb-3">Parameters</h3>
+            <div className="space-y-1">
+              <div className="flex justify-between items-center py-2 px-3 text-[12px] rounded-md hover:bg-[#18181B] transition-colors cursor-default border border-transparent hover:border-[#27272A]">
+                <span className="text-[#A1A1AA] flex items-center gap-2"><Key className="w-3 h-3"/> Risk Level</span>
+                <span className="font-medium text-[#FAFAFA]">{profile.risk_tolerance}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 px-3 text-[12px] rounded-md hover:bg-[#18181B] transition-colors cursor-default border border-transparent hover:border-[#27272A]">
+                <span className="text-[#A1A1AA] flex items-center gap-2"><Shield className="w-3 h-3"/> Capital</span>
+                <span className="font-medium text-[#FAFAFA] truncate max-w-[80px] text-right">{formatCurrency(profile.savings)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 px-3 text-[12px] rounded-md hover:bg-[#18181B] transition-colors cursor-default border border-transparent hover:border-[#27272A]">
+                <span className="text-[#A1A1AA] flex items-center gap-2"><Activity className="w-3 h-3"/> Income</span>
+                <span className="font-medium text-[#FAFAFA] truncate max-w-[80px] text-right">{formatCurrency(profile.income)}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 px-3 text-[12px] rounded-md hover:bg-[#18181B] transition-colors cursor-default border border-transparent hover:border-[#27272A]">
+                <span className="text-[#A1A1AA] flex items-center gap-2"><Clock className="w-3 h-3"/> Horizon Age</span>
+                <span className="font-medium text-[#FAFAFA]">{profile.age}</span>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div className="p-5 border-t border-slate-200 bg-[#09090B] backdrop-blur-sm shrink-0">
-          <button className="w-full flex items-center justify-center gap-2 p-3 bg-[#18181B] border border-slate-200 hover:border-slate-300 hover:bg-[#18181B] border border-white/10 mb-2 text-neutral-200 font-bold text-sm rounded-xl shadow-none transition-all active:scale-[0.98]">
-            <Plus className="h-4 w-4 text-indigo-300" /> New Analysis
-          </button>
         </div>
       </aside>
 
-      {/* Main Area */}
-      <main className="flex-1 flex flex-col min-w-0 relative bg-[#18181B]">
-        {/* Header */}
-        <header className="h-[72px] shrink-0 border-b border-slate-200/80 bg-[#18181B]/80 backdrop-blur-md flex items-center justify-between px-6 z-10 sticky top-0">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => setSidebarOpen(!sidebarOpen)} 
-              className="p-2 hover:bg-white/[0.04] rounded-lg transition-colors text-neutral-400"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            <div>
-              <h2 className="font-bold text-neutral-200 tracking-tight">Financial Engine</h2>
-              <div className="flex items-center gap-2 text-[11px] text-emerald-600 font-bold tracking-wider mt-0.5 uppercase">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-md bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-md h-2 w-2 bg-emerald-500"></span>
-                </span>
-                Agent Online
-              </div>
-            </div>
+      {/* Main Chat Interface */}
+      <main className="flex-1 flex flex-col min-w-0 relative">
+        <header className="h-14 border-b border-[#27272A] bg-[#09090B]/80 backdrop-blur-md sticky top-0 z-10 flex items-center justify-between px-4 md:hidden">
+          <div className="flex items-center gap-2">
+            <Infinity className="w-4 h-4 text-[#FAFAFA]" />
+            <span className="font-medium text-sm">FinPilot AI</span>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-md bg-[#18181B] border border-white/10 mb-2 flex items-center justify-center border border-slate-200/80">
-              <CircleUserRound className="h-5 w-5 text-slate-400" />
-            </div>
-          </div>
+          <span className="text-[10px] uppercase font-bold text-[#A1A1AA] bg-[#27272A] px-2 py-1 rounded">Session Active</span>
         </header>
 
-        {/* Messages List */}
-        <div ref={messagesRef} className="flex-1 overflow-y-auto scroll-smooth pb-32">
-          <div className="max-w-[48rem] mx-auto px-6 py-10 space-y-8">
-            {messages.length === 1 && !loading ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div className="h-16 w-16 bg-[#18181B] border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-xl flex items-center justify-center mb-6">
-                  <Sparkles className="h-8 w-8 text-indigo-300" />
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto py-8 px-4 flex flex-col gap-8 pb-32">
+            {messages.map((msg, i) => (
+              <div key={msg.id} className="flex gap-4 w-full animate-in fade-in slide-in-from-bottom-2">
+                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border border-[#27272A] bg-[#121214] mt-0.5">
+                  {msg.role === 'user' ? (
+                    <User className="w-3.5 h-3.5 text-[#FAFAFA]" />
+                  ) : (
+                    <Infinity className="w-3.5 h-3.5 text-[#FAFAFA]" />
+                  )}
                 </div>
-                <h2 className="text-3xl font-extrabold text-neutral-100 mb-3 tracking-tight">Good morning.</h2>
-                <p className="text-neutral-400 max-w-sm mb-10 font-medium">Your autonomous financial agent is ready. Ask a question or choose a scenario below to begin analysis.</p>
                 
-                <div className="grid grid-cols-2 gap-4 w-full">
-                  {[
-                    "Analyze AAPL's recent market performance.",
-                    "Build a 5-year aggressive ETF strategy.",
-                    "Optimize my savings for a downpayment.",
-                    "Evaluate tech sector volatility today."
-                  ].map((suggestion, i) => (
-                    <button 
-                      key={i} 
-                      onClick={() => handleChatSubmit(undefined, suggestion)}
-                      className="p-5 border border-slate-200/80 rounded-xl bg-[#18181B] hover:border-indigo-200 hover:shadow-[0_8px_30px_rgba(99,102,241,0.1)] transition-all text-left group"
-                    >
-                      <p className="text-sm font-semibold text-slate-700 group-hover:text-indigo-300 transition-colors leading-snug">{suggestion}</p>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              messages.map((msg, i) => {
-                if (msg.role === 'user') {
-                  const showAvatar = i === 1 || messages[i-1]?.role === 'agent';
-                  return (
-                    <div key={msg.id} className="flex w-full justify-end group animate-in fade-in slide-in-from-bottom-2">
-                       <div className="max-w-[70%] px-5 py-4 rounded-[1.5rem] rounded-br-[0.5rem] bg-indigo-600 text-white shadow-none shadow-indigo-600/10">
-                        <p className="leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // AI Message
-                return (
-                  <div key={msg.id} className="flex max-w-[85%] gap-4 animate-in fade-in slide-in-from-bottom-2 group">
-                    <div className="shrink-0 mt-1">
-                      <div className="h-8 w-8 rounded-xl bg-indigo-500/50/10 border border-indigo-500/10 flex items-center justify-center shadow-none">
-                        <Sparkles className="h-4 w-4 text-indigo-300" />
-                      </div>
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-sm text-neutral-100 mb-2 flex items-center gap-2">
-                        FinPilot AI AI
-                        {msg.streaming && <span className="text-[9px] uppercase tracking-wider text-indigo-300 bg-indigo-500/50/10 px-2 py-0.5 rounded-md font-extrabold animate-pulse">Computing</span>}
-                      </div>
-
+                <div className="flex-1 flex flex-col min-w-0 border border-transparent hover:border-[#27272A]/50 bg-transparent hover:bg-[#121214]/50 rounded-xl p-2 -m-2 transition-colors">
+                  <span className="text-[12px] font-semibold text-[#FAFAFA] mb-1.5 flex items-center gap-2">
+                    {msg.role === 'user' ? 'You' : 'FinPilot AI'}
+                    {msg.role === 'agent' && msg.streaming && (
+                      <span className="text-[9px] uppercase tracking-wider text-[#A1A1AA] flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#3B82F6] animate-pulse"></span> Processing
+                      </span>
+                    )}
+                  </span>
+                  
+                  {msg.role === 'user' ? (
+                    <p className="text-[#E4E4E7] text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                  ) : (
+                    <div className="text-[#D4D4D8] text-[15px] leading-relaxed">
                       <ReasoningTrace msg={msg} />
-
-                      {msg.answer && (
-                          <div className="prose prose-invert prose-headings:text-neutral-100 prose-h3:text-neutral-100 prose-a:text-indigo-300 prose-p:leading-relaxed prose-li:my-1 max-w-none text-neutral-200 font-medium">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                              {msg.answer}
-                            </ReactMarkdown>
-                          </div>
-                      )}
                       
-                      {!msg.answer && msg.streaming && !msg.thinking && !msg.tools.length && (
-                        <div className="mt-3 flex items-center gap-1.5 p-4 rounded-xl border border-white/10 bg-[#18181B] border border-white/10 mb-2 w-fit">
-                          <div className="h-1.5 w-1.5 rounded-md bg-neutral-500 animate-[bounce_1s_infinite] [animation-delay:-0.3s]"></div>
-                          <div className="h-1.5 w-1.5 rounded-md bg-neutral-500 animate-[bounce_1s_infinite] [animation-delay:-0.15s]"></div>
-                          <div className="h-1.5 w-1.5 rounded-md bg-neutral-500 animate-[bounce_1s_infinite]"></div>
+                      {msg.answer && (
+                        <div className="prose prose-invert prose-headings:text-[#FAFAFA] prose-p:leading-7 prose-a:text-[#60A5FA] prose-pre:bg-[#121214] prose-pre:border prose-pre:border-[#27272A] prose-code:text-[#D4D4D8] prose-code:bg-[#27272A]/50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none max-w-none break-words">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                            {msg.answer}
+                          </ReactMarkdown>
                         </div>
                       )}
                     </div>
-                  </div>
-                );
-              })
-            )}
-            <div className="h-4" /> 
+                  )}
+                </div>
+              </div>
+            ))}
+            <div ref={messagesEndRef} className="h-4" />
           </div>
         </div>
 
-        {/* Floating Input Area */}
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-white via-white/95 to-transparent pb-8 pt-10">
-          <div className="max-w-[48rem] mx-auto px-6 relative">
+        {/* Input Form */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#09090B] via-[#09090B] to-transparent pt-8 pb-6 px-4">
+          <div className="max-w-3xl mx-auto relative">
             <form 
-              onSubmit={(e) => handleChatSubmit(e)}
-              className="relative flex items-end bg-[#18181B] border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-300"
+              onSubmit={handleChatSubmit} 
+              className="relative flex items-end bg-[#121214] border border-[#27272A] rounded-xl shadow-2xl focus-within:border-[#3F3F46] focus-within:ring-4 focus-within:ring-[#ffffff05] transition-all duration-200 overflow-hidden"
             >
               <textarea
+                ref={textareaRef}
                 value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleChatSubmit();
-                  }
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  adjustTextareaHeight();
                 }}
-                className="w-full max-h-48 min-h-[60px] py-4 pl-5 pr-16 bg-transparent outline-none resize-none text-neutral-100 font-medium placeholder:text-slate-400 placeholder:font-normal leading-relaxed scrollbar-hide"
-                placeholder="Message FinPilot AI AI..."
+                onKeyDown={handleKeyDown}
+                disabled={isSending}
+                placeholder="Ask about market conditions, optimizations..."
+                className="w-full bg-transparent border-none text-[#FAFAFA] px-4 py-4 max-h-[200px] min-h-[56px] resize-none focus:outline-none placeholder:text-[#52525B] text-[15px]"
                 rows={1}
               />
-              <div className="absolute right-2 bottom-2">
-                <button 
-                  type="submit" 
-                  disabled={loading || !input.trim()}
-                  className="p-2.5 rounded-xl bg-slate-900 text-white hover:bg-indigo-600 disabled:bg-slate-100 disabled:text-slate-400 transition-all shadow-none active:scale-95 disabled:active:scale-100 disabled:shadow-none cursor-pointer"
+              <div className="absolute right-2 bottom-2 p-1">
+                <button
+                  type="submit"
+                  disabled={!input.trim() || isSending}
+                  className="p-1.5 bg-[#FAFAFA] text-[#09090B] rounded-lg hover:bg-[#E4E4E7] disabled:bg-[#27272A] disabled:text-[#52525B] transition-colors flex items-center justify-center cursor-pointer disabled:cursor-not-allowed"
                 >
-                  <Send className="h-5 w-5" />
+                  <CornerDownLeft className="w-4 h-4" />
                 </button>
               </div>
             </form>
-            <p className="text-center text-[11px] font-semibold tracking-wide text-slate-400 mt-4 uppercase">
-              FinPilot AI AI can make mistakes. Verify critical financial decisions.
-            </p>
+            <div className="text-center mt-2.5">
+              <p className="text-[10px] text-[#52525B] font-medium tracking-wide">FinPilot AI is an experimental engine. Verify structural financial calculations.</p>
+            </div>
           </div>
         </div>
       </main>
