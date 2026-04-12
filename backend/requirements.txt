@@ -11,3 +11,10 @@ gymnasium
 numpy
 pandas
 python-dotenv
+sqlalchemy
+aiosqlite
+asyncpg
+greenlet
+pyjwt
+passlib[bcrypt]
+bcrypt

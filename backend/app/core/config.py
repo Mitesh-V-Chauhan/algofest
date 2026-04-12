@@ -30,7 +30,10 @@ class Settings(BaseSettings):
         "DATABASE_URL", 
         "sqlite+aiosqlite:///./algofest.db"
     )
+    
+    # LLM API Key (Google Gemini)
+    GOOGLE_API_KEY: str = ""
 
-    model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
+    model_config = SettingsConfigDict(case_sensitive=True, env_file=".env", extra="ignore")
 
 settings = Settings()

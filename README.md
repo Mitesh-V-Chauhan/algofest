@@ -72,14 +72,14 @@ The client is a dark-mode optimized Next.js interface designed to bridge the cog
 
 ## Agentic Capabilities & Algorithmic Arsenal
 
-The agent is equipped with a suite of registered Python tools that it can execute autonomously to solve complex financial queries. Rather than acting as a static text predictor, the LLM identifies when external compute is required, drafts the parameters, and invokes the following models:
+The agent is equipped with a suite of registered Python tools that it can execute autonomously to solve complex financial queries. Rather than acting as a static text predictor, the LLM identifies when external compute is required, drafts the parameters, and invokes the tools assigned to it.
 
-1.  **Markowitz Mean-Variance Optimization (MVO):** 
-    *   **Mechanism:** When a user requests portfolio balancing, the agent invokes an internal Python mathematical sub-routine.
-    *   **Logic:** The tool computes the covariance matrix of expected returns and dynamically solves for the Optimal Sharpe Ratio or Minimum Variance Frontier based on the user's declared risk tolerance (Conservative, Moderate, Aggressive).
-2.  **Live Market Data Fetchers:**
-    *   **Mechanism:** Exposes the agent to real-time equity and asset price queries.
-    *   **Logic:** The agent autonomously identifies ticker symbols from natural language, retrieves current pricing matrices, and injects the live data back into the graph state to ensure all financial advice is based on up-to-the-minute conditions rather than stale model training data.
+| Tool / Capability | Technology / Library | Primary Function |
+| :--- | :--- | :--- |
+| **Markowitz Mean-Variance Optimization (MVO)** | `cvxpy`, `numpy`, `pandas` | Computes the covariance matrix of expected returns and dynamically solves for the Optimal Sharpe Ratio or Minimum Variance Frontier based on the user's declared risk tolerance. |
+| **Live Market Data Fetcher** | `yfinance` | Exposes the agent to real-time equity and asset price queries. The agent autonomously identifies ticker symbols from natural language to retrieve current pricing matrices. |
+| **Reinforcement Learning Models** | `stable-baselines3`, `gymnasium` | Provides environment simulation and advanced RL algorithms (like PPO, SAC) for training custom trading agents or evaluating dynamic financial policies. |
+| **Generative Reasoning Engine** | `langchain-google-genai` | The core intelligence that interprets user inputs, delegates tasks to the tools above, and synthesizes the final financial advice. |
 
 ---
 
