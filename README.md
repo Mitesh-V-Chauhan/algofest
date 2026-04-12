@@ -1,62 +1,112 @@
-# AlgoFest - Agentic Finance Advisor
+<div align="center">
+  <h1>🚀 AlgoFest: Agentic Finance Advisor</h1>
+  <p><b>An enterprise-grade, state-driven LLM application featuring real-time reasoning traces, cyclical tool execution, and persistent conversational memory.</b></p>
+  
+  [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
+  [![LangGraph](https://img.shields.io/badge/LangGraph-Agentic_State-blue?style=flat-square)](https://python.langchain.com/docs/langgraph/)
+  [![Gemini Pro](https://img.shields.io/badge/Gemini-Pro_3.1-4285F4?style=flat-square&logo=google)](https://deepmind.google/technologies/gemini/)
+  [![Database](https://img.shields.io/badge/SQLite-PostgreSQL-336791?style=flat-square&logo=postgresql)](#)
+</div>
 
-AlgoFest is a comprehensive, AI-driven financial advisory application featuring a modern React/Next.js frontend with Server-Sent Events (SSE) streaming, backed by a FastAPI and LangGraph-powered Python engine. 
+<br/>
 
-## 🏗️ Architecture Stack
+## 🧠 The Vision
 
-- **Frontend**: Next.js 15 (App Router), React, Tailwind CSS v4, Framer Motion, `@tailwindcss/typography` (for rich markdown AI rendering).
-- **Backend API**: FastAPI, Uvicorn, Python 3.12.
-- **AI Agent Engine**: LangGraph, LangChain, Google Gemini Pro. Features true conversational memory and dynamic tool execution chaining.
-- **Database**: SQLite / Aiosqlite (Development/Ephemeral deployments) -> PostgreSQL (Production upgrade path).
+**AlgoFest** isn't just another chat wrapper. It is a highly sophisticated, autonomous financial advisory agent built on a **Reactive State Machine (LangGraph)**. 
 
-## 🔥 Core Capabilities
+Designed for low-latency reasoning and dynamic tool execution, the architecture allows the AI to "think" before it speaks, execute multi-step APIs, evaluate the output, and iteratively formulate comprehensive financial analyses. Combined with a premium, framer-motion powered Next.js frontend, AlgoFest delivers an unparalleled user experience, visualizing the AI's internal cognition matrix via Server-Sent Events (SSE) in real time.
 
-1. **Intelligent Streaming Reasoning**: Emulates modern AI reasoning traces. See the AI "Computing", executing tools, and breaking down complex financial problems gracefully in the UI.
-2. **Threaded Memory State**: Conversational memory checkpointing maps thread histories so the LangGraph agent can carry context between turns and iterate.
-3. **Markdown Rendering**: Robustly parses tables, code blocks, lists, and mathematical formats securely to the browser via `react-markdown` and `remark-gfm`.
-4. **Environment Dynamic Portability**: Ships with seamless deployment configurations handling dynamic Next.js runtime environment variables (`NEXT_PUBLIC_API_URL`) and robust API CORS setups.
+---
 
-## 🚀 Getting Started
+## 🏗️ System Architecture
 
-### 1. Backend Initialization
+Our stack is separated into highly decoupled, independently scalable micro-environments:
 
-Navigate to the backend and activate the virtual environment:
+### 1. The Cognition Engine (Backend / API)
+*   **Framework**: FastAPI running on ASGI (Uvicorn).
+*   **Agentic Framework**: `langgraph.graph.StateGraph` & `create_react_agent`.
+*   **LLM Binding**: Google Gemini 3.1 Pro/Flash with dynamic model fallbacks via exception handling.
+*   **Memory & State**: LangGraph `MemorySaver` paired with SQLite (`aiosqlite`) or PostgreSQL (`asyncpg`). Thread IDs bind the LangGraph checkpoints directly to the authenticated user.
+*   **Real-time Streaming**: Custom Python generators parse `<thinking>` XML streams sequentially, splitting `thinking_delta`, `answer_delta`, and `tool_call` events down an HTTP/1.1 SSE pipeline.
+
+### 2. The Presentation Layer (Frontend)
+*   **Framework**: Next.js 15 (React 19) utilizing the App Router paradigm.
+*   **Styling**: Tailwind CSS v4 + `@tailwindcss/typography` (`prose`).
+*   **State & Animation**: `framer-motion` handles complex layout recalculations as the AI's thought processes expand and contract dynamically.
+*   **Markdown Parsing**: `react-markdown` + `remark-gfm` parses complex tabular data, math, and syntax-highlighted code emitted by the agent.
+
+---
+
+## ✨ Engineering Highlights for Judges & Reviewers
+
+1.  **Transparent Thought Protocols:** Instead of blinding the user while waiting for large generations, the backend intercepts LLM reasoning tokens and streams them alongside standard output. The UI smoothly renders an expandable "Computing/Reasoning" trace.
+2.  **Cyclal Tool Processing:** The AI isn't limited to one-shot answers. It can call a tool, parse the JSON response, realize it needs more data, call another tool, and finally compile the response.
+3.  **Authentication & Portability:** Native Bearer JWT implementation using `PyJWT` and `bcrypt`. User threads are securely isolated. 
+4.  **SQLAlchemy + Alembic Portability:** The database configuration (`app.core.config.Settings`) uses Pydantic to sniff the environment. Pass it an `sqlite:///` string for local dev, or an `asyncpg://` PostgreSQL string in production—the ORM handles dialect variances autonomously.
+
+---
+
+## 🛠️ Quickstart (Local Development)
+
+### 1. Clone & Core Setup
+```bash
+git clone https://github.com/Mitesh-V-Chauhan/algofest.git
+cd algofest
+```
+
+### 2. Bootstrapping the Backend (Python 3.12+)
 ```bash
 cd backend
-python3 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+**Environment Configuration (`backend/.env`):**
+Create a `.env` file in the `backend/` directory:
+```env
+SECRET_KEY=generate_a_secure_random_string
+GOOGLE_API_KEY=your_gemini_api_key_here
+DATABASE_URL=sqlite+aiosqlite:///./algofest.db
+BACKEND_CORS_ORIGINS=http://localhost:3000
+```
+> *Note: FastAPI's `lifespan` hook will automatically create the `algofest.db` file and instantiate the SQL metadata tables upon booting.*
 
-**Set Environment Variables:**
-Copy `.env.example` to `.env` and insert your Gemini API Key and desired `SECRET_KEY`.
-
-**Run the API Server:**
+**Run the API:**
 ```bash
 fastapi dev app/main.py --host 0.0.0.0 --port 8000
 ```
-> At startup, this will automatically create the `algofest.db` SQLite database files and seed necessary user/thread tables.
 
-### 2. Frontend Initialization
-
-Navigate to the frontend, install dependencies, and run the development server:
+### 3. Bootstrapping the Frontend (Node.js)
+Open a new terminal window:
 ```bash
 cd frontend
 npm install
+```
+**Environment Configuration (`frontend/.env`):**
+Create a `.env` file in the `frontend/` directory:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+```
+**Run the Client:**
+```bash
 npm run dev
 ```
+Navigate to `http://localhost:3000` to interact with the advisor!
 
-**Set Environment Variables:**
-Copy `.env.example` to `.env` and set `NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1` (for local development).
+---
 
-The application will be running natively at [http://localhost:3000](http://localhost:3000).
+## 🚀 Production Deployment Playbook
 
-## 🚢 Deployment Notes & Limitations (Ephemeral DB)
+For full production release (e.g., rendering the app "live" for users), the ephemeral SQLite database will not suffice due to container resets on platforms like Render or Vercel. 
 
-If you are deploying this immediately on platforms like Render, Koyeb, or Vercel without migrating the `DATABASE_URL` to a persistent database (like Supabase PostgreSQL):
-- The app **will** work perfectly for live users!
-- However, because cloud host environments "spin down" or "re-deploy", the local instances of `algofest.db` inside your deployment container will reset. Conversational memory threads will be lost when the server restarts or scales down.
-- **The fix for scale:** Ensure you assign a PostgreSQL URI to the backend `DATABASE_URL` variable in your production environment settings!
+**Steps for scale:**
+1.  **Database**: Spin up a Serverless Postgres instance (Neon, Supabase).
+2.  **Backend (Render/Koyeb)**: Deploy the FastAPI codebase. Set `DATABASE_URL` to your async PostgreSQL string, `GOOGLE_API_KEY`, and add your frontend's domain to `BACKEND_CORS_ORIGINS`.
+3.  **Frontend (Vercel)**: Deploy the Next.js frontend. Set `NEXT_PUBLIC_API_URL` to your production backend URL ensuring `HTTPS` is enforced.
 
-## 🔐 Auth & Security
-Endpoints are safeguarded using Bearer Token JWTs (`app/core/security.py`). Real identities and chat histories lock against secure API keys preventing leaking conversation data among distinct clients.
+---
+<div align="center">
+  <i>Architected with precision. Built for scale.</i><br/>
+  <b>Mitesh V Chauhan</b>
+</div>
