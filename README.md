@@ -1,39 +1,72 @@
-# AlgoFest: Agentic Finance Advisor
+<div align="center">
+  <h1>FinPilot AI</h1>
+  <p><b>State-Driven Autonomous Financial Advisory Agent</b></p>
+  
+  [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)](https://nextjs.org/)
+  [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat-square&logo=fastapi)](https://fastapi.tiangolo.com/)
+  [![LangGraph](https://img.shields.io/badge/LangGraph-Agentic_State-blue?style=flat-square)](#)
+  [![Gemini Pro](https://img.shields.io/badge/Gemini-Pro_3.1-4285F4?style=flat-square&logo=google)](#)
+</div>
 
-AlgoFest is a state-driven, autonomous financial advisory application. It leverages a reactive state machine to process complex financial queries, executing multi-step reasoning and dynamic tool calls. The system streams its cognitive process and final responses in real-time to a modern web client.
+<br/>
+
+FinPilot AI is an enterprise-grade LLM application designed to process complex financial queries through a reactive state machine. It executes multi-step reasoning, dynamic tool calls, and streams its cognitive process in real-time to a modern web client.
+
+---
+
+## Technology Stack
+
+| Architecture Domain | Technologies Used | Primary Function |
+| :--- | :--- | :--- |
+| **Frontend Framework** | Next.js 15, React 19 | Application routing, Server Components, and client interface. |
+| **User Interface** | Tailwind CSS v4, Framer Motion | Minimalistic dark-mode styling, fluid layout transitions, and responsive design. |
+| **Markdown Parsing** | React Markdown, Remark GFM | Render tabular data, math formulas, and code blocks from LLM output. |
+| **Backend Framework** | FastAPI, Uvicorn | High-performance, asynchronous ASGI server and API routing. |
+| **AI / Agent Logic** | LangGraph, LangChain | Cyclic state execution, tool evaluation, and multi-step reasoning. |
+| **Language Models** | Google Gemini 3.1 Pro & Flash | Core intelligence, context evaluation, and strategy generation. |
+| **Database & ORM** | PostgreSQL, SQLite, SQLAlchemy | Thread persistence and user data storage using `asyncpg` / `aiosqlite`. |
+| **Security** | PyJWT, bcrypt, passlib | JWT-based Bearer Authentication and cryptographic password hashing. |
+
+---
 
 ## System Architecture
 
-The application is decoupled into two primary domains: the Agentic Backend and the Presentation Frontend. 
+The application is decoupled into two primary domains to ensure structural integrity and scalability.
 
-### 1. Backend (Cognition Engine)
-- **Core Framework**: FastAPI running on an ASGI server (Uvicorn).
-- **State Management**: LangGraph (`StateGraph`) combined with LangChain. Replaces traditional linear LLM architectures with a cyclic graph capable of multi-step tool execution based on dynamic conditions.
-- **Memory & Persistence**: Utilizes LangGraph's `MemorySaver` backed by a relational SQL database (SQLite for local development, migrating to PostgreSQL in production via SQLAlchemy and `asyncpg`). Thread IDs ensure conversational context accurately maps to isolated user sessions.
-- **Real-Time Streaming Protocol**: Implements Server-Sent Events (SSE). A custom generator intercepts the LLM's token stream, isolating XML-style `<thinking>` reasoning blocks from the final answer. It emits granular data chunks (`status`, `thinking_delta`, `answer_delta`, `tool_call`) down an HTTP/1.1 pipeline.
-- **Security & Entities**: Features JWT-based Bearer Authentication (`PyJWT`, `bcrypt`) to validate token claims and secure API endpoint access endpoints against unauthorized thread lookups.
+### 1. Cognition Engine (Backend)
 
-### 2. Frontend (Presentation Layer)
-- **Core Framework**: Next.js 15 utilizing the App Router and React Server Components.
-- **Interface & Parsing**: Tailwind CSS v4 handles utility-based styling. The application ingests the raw markdown output streamed from the agent and renders complex tabular data, math formulas, and syntax-highlighted artifacts natively using `react-markdown` and `@tailwindcss/typography`.
-- **State & Animation**: `framer-motion` manages dynamic layout transitions, gracefully expanding or contracting the UI when the agent actively streams its internal reasoning trace or invokes external data-fetching tools.
+The backend replaces linear LLM generation with a cyclic graph capable of independent tool execution based on conditional evaluations.
+
+*   **State Management:** Utilizes LangGraph's `MemorySaver` backed by a relational database. Thread IDs ensure conversational context accurately maps to isolated user sessions.
+*   **Real-Time Streaming Protocol:** Implements Server-Sent Events (SSE). A custom generator intercepts the LLM's token stream, isolating XML-style `<thinking>` reasoning blocks from the final answer. It emits granular data chunks (`status`, `thinking_delta`, `answer_delta`, `tool_call`) directly down an HTTP/1.1 pipeline.
+*   **Security & Entities:** Features robust access controls to validate token claims and secure API endpoints against unauthorized thread lookups.
+
+### 2. Presentation Layer (Frontend)
+
+The client is a dark-mode optimized Next.js interface designed to bridge the cognitive trace of the agent with the user seamlessly.
+
+*   **Interface Parsing:** The application ingests the raw markdown output streamed from the agent and applies the `@tailwindcss/typography` plugin to convert complex responses into highly readable, structurally sound components.
+*   **Dynamic Layouts:** `framer-motion` manages dynamic layout transitions, gracefully expanding or contracting the UI when the agent actively streams its internal reasoning trace or invokes external data-fetching tools.
+
+---
 
 ## Technical Execution Workflow
 
-When a user submits a prompt, the system processes it through the following life cycle:
+When a user submits a prompt, the system processes it through the following lifecycle:
 
-1. **Authentication Validation**: The request parses the bearer token, validates the JWT, and maps the user to a specific Thread ID.
-2. **Graph Invocation**: The user's input enters the running LangGraph agent state. 
-3. **Evaluation via LLM**: The reasoning model (Google Gemini) processes the prompt. It evaluates if the question can be answered definitively or if external tools are required.
-4. **Tool Execution Loop**: If a tool is necessary, the graph execution halts LLM generation, delegates the required parameters to a designated Python function, appends the execution result (JSON/Text) back into the state, and restarts the LLM evaluation cycle.
-5. **Stream Emittance**: Concurrently, the backend generator buffers the response. It strips the `<thinking>` tokens into the `reasoning` trace panel on the frontend, and pipes the formal `answer` separately so the client can incrementally format the Markdown without layout breakage.
+1.  **Authentication:** The request parses the bearer token, validates the JWT, and maps the user to a specific Thread ID.
+2.  **Graph Invocation:** The user's input enters the running LangGraph state mechanism.
+3.  **Inference & Logic:** Google Gemini evaluates the prompt. It decides if the question can be resolved immediately or if external data/tools are required.
+4.  **Delegation Loop:** If a tool is necessary, graph execution delegates parameters to a registered Python function, injects the execution result (JSON/Text) back into the state, and restarts the evaluation cycle.
+5.  **Stream Emittance:** The backend isolates the trace into the `reasoning` panel on the frontend and pipes the definitive `answer` separately so the client safely applies the Markdown formatter.
 
 ---
 
 ## Local Development Setup
 
-### 1. Backend Configuration
-Ensure you have Python 3.12+ installed on your operating system.
+### Backend Configuration
+
+Requires Python 3.12 or higher.
 
 ```bash
 cd backend
@@ -42,51 +75,54 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Create an environment variables file named `.env` in the `backend/` directory:
+Create a `.env` file in the `backend/` directory:
+
 ```env
 SECRET_KEY=your_secure_random_string_here
 GOOGLE_API_KEY=your_gemini_api_key_here
+
+# Development Database Connection
 DATABASE_URL=sqlite+aiosqlite:///./algofest.db
 BACKEND_CORS_ORIGINS=http://localhost:3000
 ```
-*Note: FastAPI's lifespan configuration will automatically generate the SQLite `.db` file and instantiate the necessary schema tables (`users`, `chat_threads`) upon server boot.*
 
 Start the ASGI server:
+
 ```bash
 fastapi dev app/main.py --host 0.0.0.0 --port 8000
 ```
 
-### 2. Frontend Configuration
-Ensure you have Node.js and NPM installed. Open a secondary terminal instance.
+### Frontend Configuration
+
+Requires Node.js 20+ and NPM.
 
 ```bash
 cd frontend
 npm install
 ```
 
-Create an environment variables file named `.env` in the `frontend/` directory:
+Create a `.env` file in the `frontend/` directory:
+
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
-Start the Next.js development server:
+Start the development server:
+
 ```bash
 npm run dev
 ```
 
-The application will now be accessible at `http://localhost:3000`.
+Application runs natively at `http://localhost:3000`.
 
 ---
 
 ## Production Deployment Guidelines
 
-The provided SQLite configuration is strictly intended for ephemeral, local development environments. Cloud platforms (like Render, Vercel, or Heroku) utilize stateless container filesystems which will result in data loss if SQLite is retained in a production release.
+The SQLite configuration is designed for local development. Cloud container orchestrators (Render, Vercel, Heroku) utilize stateless filesystems, resulting in data loss if SQLite is deployed to production.
 
-To deploy for production, the infrastructure must be adjusted:
+**For a production release:**
 
-1. **Persistent Database**: Provision a managed PostgreSQL instance (e.g., Supabase, Neon, AWS RDS).
-2. **Backend Environment Variables**: 
-   - Set the `DATABASE_URL` environment variable to your async PostgreSQL connection string (`postgresql+asyncpg://user:pass@host/db`). 
-   - Configure `BACKEND_CORS_ORIGINS` to securely permit requests exclusively from your production frontend URL (e.g., `https://algofest.vercel.app`).
-   - Define a highly secure 32-byte hexadecimal `SECRET_KEY`.
-3. **Frontend Environment Variables**: Set `NEXT_PUBLIC_API_URL` to point to the production backend's HTTPS endpoint.
+1.  **Database Migration:** Provision a managed PostgreSQL instance (e.g., Supabase, Neon).
+2.  **Backend Environment:** Update `DATABASE_URL` to route to the async PostgreSQL connection string (`postgresql+asyncpg://user:pass@host/db`). Configure `BACKEND_CORS_ORIGINS` to allow traffic exclusively from your production UI domain.
+3.  **Frontend Environment:** Update `NEXT_PUBLIC_API_URL` to point to your secure FastAPI production endpoint.

@@ -1,20 +1,19 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Sora } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const sora = Sora({
+const sora = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
 
-const ibmPlexMono = IBM_Plex_Mono({
+const ibmPlexMono = Geist_Mono({
   variable: "--font-geist-mono",
-  weight: ["400", "500"],
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Agentic Finance Advisor",
+  title: "FinPilot AI",
   description: "Live reasoning finance advisor with tool traces and portfolio optimization",
 };
 
@@ -26,9 +25,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${sora.variable} ${ibmPlexMono.variable} h-full antialiased`}
+      className={`${sora.variable} ${ibmPlexMono.variable} h-full antialiased dark`}
+      style={{ colorScheme: "dark" }}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-neutral-950 text-neutral-100">{children}</body>
     </html>
   );
 }

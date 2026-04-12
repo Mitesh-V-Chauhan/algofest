@@ -4,7 +4,7 @@ from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "Agentic Finance Advisor API"
+    PROJECT_NAME: str = "FinPilot AI API"
     API_V1_STR: str = "/api/v1"
     
     # SECURITY WARNING: keep the secret key used in production secret!
