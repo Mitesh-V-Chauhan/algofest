@@ -110,14 +110,14 @@ function ReasoningTrace({ msg }: { msg: AgentMessage }) {
   if (!hasThinking && !hasTools && !msg.streaming) return null;
 
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200/60 bg-neutral-900 border border-neutral-800 mb-2/50 transition-all duration-300 w-full mb-3">
+    <div className="mt-4 overflow-hidden rounded-xl border border-white/5 bg-transparent border-white/5 transition-all duration-300 w-full mb-3">
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between bg-neutral-800/50 px-4 py-3 text-xs font-semibold text-neutral-300 transition-colors hover:bg-slate-100"
+        className="flex w-full items-center justify-between bg-white/[0.02] px-4 py-3 text-xs font-semibold text-neutral-300 transition-colors hover:bg-white/[0.04]"
       >
         <div className="flex items-center gap-2">
           {msg.streaming ? (
-            <Activity className="h-3.5 w-3.5 animate-pulse text-indigo-500" />
+            <Activity className="h-3.5 w-3.5 animate-pulse text-neutral-400" />
           ) : (
             <BrainCircuit className="h-3.5 w-3.5 text-slate-400" />
           )}
@@ -133,7 +133,7 @@ function ReasoningTrace({ msg }: { msg: AgentMessage }) {
       </button>
 
       {isOpen && (
-        <div className="border-t border-slate-200/50 p-4 space-y-5 bg-neutral-900/40 backdrop-blur-sm">
+        <div className="border-t border-slate-200/50 p-4 space-y-5 bg-[#18181B]/40 backdrop-blur-sm">
           {/* Thinking phase */}
           {hasThinking && (
             <div>
@@ -150,8 +150,8 @@ function ReasoningTrace({ msg }: { msg: AgentMessage }) {
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Executed Tools</p>
               <div className="space-y-2">
                 {msg.tools.map((toolLine, idx) => (
-                  <div key={idx} className="flex items-start gap-2 bg-neutral-900 border border-slate-200 rounded-lg p-3 shadow-none">
-                    <Activity className="h-4 w-4 text-indigo-400 mt-0.5 shrink-0" />
+                  <div key={idx} className="flex items-start gap-2 bg-[#18181B] border border-slate-200 rounded-lg p-3 shadow-none">
+                    <Activity className="h-4 w-4 text-indigo-300 mt-0.5 shrink-0" />
                     <p className="font-mono text-[11px] leading-loose text-neutral-300 break-all">{toolLine}</p>
                   </div>
                 ))}
@@ -339,14 +339,14 @@ export default function Home() {
   // --- Onboarding Screen ---
   if (!profile) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4 bg-neutral-900 border border-neutral-800 mb-2 relative overflow-hidden font-sans">
+      <main className="min-h-screen flex items-center justify-center p-4 bg-[#18181B] border border-white/10 mb-2 relative overflow-hidden font-sans">
         {/* Background Accents */}
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-500/100/100/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-md bg-indigo-500/50/100/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-md bg-cyan-500/10 blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-lg rounded-[2rem] border border-white bg-neutral-900/60 backdrop-blur-2xl p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] shadow-indigo-500/5">
-          <div className="inline-flex items-center justify-center rounded-2xl bg-indigo-500/100/10/80 border border-indigo-500/20 p-4 mb-6 shadow-none">
-            <Sparkles className="h-7 w-7 text-indigo-400" />
+        <div className="relative z-10 w-full max-w-lg rounded-[2rem] border border-white bg-[#18181B]/60 backdrop-blur-2xl p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] shadow-indigo-500/5">
+          <div className="inline-flex items-center justify-center rounded-xl bg-indigo-500/50/10/80 border border-indigo-500/10 p-4 mb-6 shadow-none">
+            <Sparkles className="h-7 w-7 text-indigo-300" />
           </div>
           <h1 className="text-3xl font-extrabold text-neutral-100 tracking-tight">FinPilot AI <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-cyan-500">Agent</span></h1>
           <p className="mt-3 text-neutral-400 leading-relaxed font-medium">Calibrate your autonomous financial engine. Set your baseline to unlock personalized wealth strategies.</p>
@@ -356,13 +356,13 @@ export default function Home() {
               <div>
                 <label className="block text-[11px] font-bold mb-2 uppercase tracking-widest text-neutral-400">Current Age</label>
                 <div className="relative">
-                  <input type="number" required value={age} onChange={e => setAge(e.target.value)} className="w-full rounded-2xl border border-slate-200/80 bg-neutral-900/80 px-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium shadow-none hover:border-slate-300" placeholder="e.g. 28" />
+                  <input type="number" required value={age} onChange={e => setAge(e.target.value)} className="w-full rounded-xl border border-slate-200/80 bg-[#18181B]/80 px-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium shadow-none hover:border-slate-300" placeholder="e.g. 28" />
                 </div>
               </div>
               <div>
                 <label className="block text-[11px] font-bold mb-2 uppercase tracking-widest text-neutral-400">Risk Profile</label>
                 <div className="relative">
-                  <select value={risk} onChange={e => setRisk(e.target.value)} className="w-full rounded-2xl border border-slate-200/80 bg-neutral-900/80 px-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium appearance-none shadow-none hover:border-slate-300">
+                  <select value={risk} onChange={e => setRisk(e.target.value)} className="w-full rounded-xl border border-slate-200/80 bg-[#18181B]/80 px-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium appearance-none shadow-none hover:border-slate-300">
                     <option value="Low">Conservative</option>
                     <option value="Medium">Balanced</option>
                     <option value="High">Aggressive</option>
@@ -376,7 +376,7 @@ export default function Home() {
               <label className="block text-[11px] font-bold mb-2 uppercase tracking-widest text-neutral-400">Annual Income</label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-slate-400 font-medium">$</span>
-                <input type="number" required value={income} onChange={e => setIncome(e.target.value)} className="w-full rounded-2xl border border-slate-200/80 bg-neutral-900/80 pl-8 pr-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium shadow-none hover:border-slate-300" placeholder="120,000" />
+                <input type="number" required value={income} onChange={e => setIncome(e.target.value)} className="w-full rounded-xl border border-slate-200/80 bg-[#18181B]/80 pl-8 pr-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium shadow-none hover:border-slate-300" placeholder="120,000" />
               </div>
             </div>
 
@@ -384,12 +384,12 @@ export default function Home() {
               <label className="block text-[11px] font-bold mb-2 uppercase tracking-widest text-neutral-400">Liquid Savings</label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-slate-400 font-medium">$</span>
-                <input type="number" required value={savings} onChange={e => setSavings(e.target.value)} className="w-full rounded-2xl border border-slate-200/80 bg-neutral-900/80 pl-8 pr-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium shadow-none hover:border-slate-300" placeholder="45,000" />
+                <input type="number" required value={savings} onChange={e => setSavings(e.target.value)} className="w-full rounded-xl border border-slate-200/80 bg-[#18181B]/80 pl-8 pr-4 py-3.5 text-neutral-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-medium shadow-none hover:border-slate-300" placeholder="45,000" />
               </div>
             </div>
 
             <div className="pt-2">
-              <button type="submit" className="w-full rounded-2xl bg-slate-900 py-4 font-bold tracking-wide text-white transition-all hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98] flex items-center justify-center gap-2">
+              <button type="submit" className="w-full rounded-xl bg-slate-900 py-4 font-bold tracking-wide text-white transition-all hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/25 active:scale-[0.98] flex items-center justify-center gap-2">
                 Deploy Agent <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -404,8 +404,8 @@ export default function Home() {
     <div className="flex h-screen bg-[#FDFDFE] text-neutral-100 overflow-hidden font-sans">
       
       {/* Sidebar */}
-      <aside className={cn("flex flex-col bg-neutral-900 border border-neutral-800 mb-2/50 border-r border-slate-200 transition-all duration-300 z-20", sidebarOpen ? "w-72" : "w-0 opacity-0 overflow-hidden border-none")}>
-        <div className="p-4 flex items-center gap-3 border-b border-slate-200 px-6 h-[72px] shrink-0 bg-neutral-900/50 backdrop-blur-sm">
+      <aside className={cn("flex flex-col bg-transparent border-white/5 border-r border-slate-200 transition-all duration-300 z-20", sidebarOpen ? "w-72" : "w-0 opacity-0 overflow-hidden border-none")}>
+        <div className="p-4 flex items-center gap-3 border-b border-slate-200 px-6 h-[72px] shrink-0 bg-[#09090B] backdrop-blur-sm">
           <div className="h-8 w-8 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0 shadow-none shadow-indigo-600/20">
             <Sparkles className="h-4 w-4 text-white" />
           </div>
@@ -415,17 +415,17 @@ export default function Home() {
         <div className="flex-1 overflow-y-auto p-5 scrollbar-hide">
           <div className="mb-8">
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 px-1">Active Profile</p>
-            <div className="bg-neutral-900 border border-slate-200/80 rounded-2xl p-3.5 shadow-none space-y-3">
+            <div className="bg-[#18181B] border border-slate-200/80 rounded-xl p-3.5 shadow-none space-y-3">
               <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-                <ShieldAlert className="h-4 w-4 text-indigo-400" />
+                <ShieldAlert className="h-4 w-4 text-indigo-300" />
                 <span>{profile.risk_tolerance} Risk</span>
               </div>
               <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-                <Wallet className="h-4 w-4 text-indigo-400" />
+                <Wallet className="h-4 w-4 text-indigo-300" />
                 <span>{formatCurrency(profile.savings)} Cap</span>
               </div>
               <div className="flex items-center gap-3 text-sm font-semibold text-slate-700">
-                <TrendingUp className="h-4 w-4 text-indigo-400" />
+                <TrendingUp className="h-4 w-4 text-indigo-300" />
                 <span>{formatCurrency(profile.income)}/yr</span>
               </div>
             </div>
@@ -434,31 +434,31 @@ export default function Home() {
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-3 px-1">Recent Scenarios</p>
             <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-neutral-300 hover:bg-slate-200/50 hover:text-neutral-100 rounded-xl transition-colors text-left group">
-              <Clock className="h-4 w-4 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+              <Clock className="h-4 w-4 text-slate-400 group-hover:text-indigo-300 transition-colors" />
               <span className="truncate">AAPL Q3 Earnings</span>
             </button>
             <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-neutral-300 hover:bg-slate-200/50 hover:text-neutral-100 rounded-xl transition-colors text-left mt-1 group">
-              <Clock className="h-4 w-4 text-slate-400 group-hover:text-indigo-400 transition-colors" />
+              <Clock className="h-4 w-4 text-slate-400 group-hover:text-indigo-300 transition-colors" />
               <span className="truncate">House Downpayment</span>
             </button>
           </div>
         </div>
 
-        <div className="p-5 border-t border-slate-200 bg-neutral-900/50 backdrop-blur-sm shrink-0">
-          <button className="w-full flex items-center justify-center gap-2 p-3 bg-neutral-900 border border-slate-200 hover:border-slate-300 hover:bg-neutral-900 border border-neutral-800 mb-2 text-neutral-200 font-bold text-sm rounded-xl shadow-none transition-all active:scale-[0.98]">
-            <Plus className="h-4 w-4 text-indigo-400" /> New Analysis
+        <div className="p-5 border-t border-slate-200 bg-[#09090B] backdrop-blur-sm shrink-0">
+          <button className="w-full flex items-center justify-center gap-2 p-3 bg-[#18181B] border border-slate-200 hover:border-slate-300 hover:bg-[#18181B] border border-white/10 mb-2 text-neutral-200 font-bold text-sm rounded-xl shadow-none transition-all active:scale-[0.98]">
+            <Plus className="h-4 w-4 text-indigo-300" /> New Analysis
           </button>
         </div>
       </aside>
 
       {/* Main Area */}
-      <main className="flex-1 flex flex-col min-w-0 relative bg-neutral-900">
+      <main className="flex-1 flex flex-col min-w-0 relative bg-[#18181B]">
         {/* Header */}
-        <header className="h-[72px] shrink-0 border-b border-slate-200/80 bg-neutral-900/80 backdrop-blur-md flex items-center justify-between px-6 z-10 sticky top-0">
+        <header className="h-[72px] shrink-0 border-b border-slate-200/80 bg-[#18181B]/80 backdrop-blur-md flex items-center justify-between px-6 z-10 sticky top-0">
           <div className="flex items-center gap-4">
             <button 
               onClick={() => setSidebarOpen(!sidebarOpen)} 
-              className="p-2 hover:bg-slate-100 rounded-lg transition-colors text-neutral-400"
+              className="p-2 hover:bg-white/[0.04] rounded-lg transition-colors text-neutral-400"
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -466,15 +466,15 @@ export default function Home() {
               <h2 className="font-bold text-neutral-200 tracking-tight">Financial Engine</h2>
               <div className="flex items-center gap-2 text-[11px] text-emerald-600 font-bold tracking-wider mt-0.5 uppercase">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-md bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-md h-2 w-2 bg-emerald-500"></span>
                 </span>
                 Agent Online
               </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 rounded-full bg-neutral-900 border border-neutral-800 mb-2 flex items-center justify-center border border-slate-200/80">
+            <div className="h-9 w-9 rounded-md bg-[#18181B] border border-white/10 mb-2 flex items-center justify-center border border-slate-200/80">
               <CircleUserRound className="h-5 w-5 text-slate-400" />
             </div>
           </div>
@@ -485,8 +485,8 @@ export default function Home() {
           <div className="max-w-[48rem] mx-auto px-6 py-10 space-y-8">
             {messages.length === 1 && !loading ? (
               <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <div className="h-16 w-16 bg-neutral-900 border border-neutral-800 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl flex items-center justify-center mb-6">
-                  <Sparkles className="h-8 w-8 text-indigo-400" />
+                <div className="h-16 w-16 bg-[#18181B] border border-white/10 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-xl flex items-center justify-center mb-6">
+                  <Sparkles className="h-8 w-8 text-indigo-300" />
                 </div>
                 <h2 className="text-3xl font-extrabold text-neutral-100 mb-3 tracking-tight">Good morning.</h2>
                 <p className="text-neutral-400 max-w-sm mb-10 font-medium">Your autonomous financial agent is ready. Ask a question or choose a scenario below to begin analysis.</p>
@@ -501,9 +501,9 @@ export default function Home() {
                     <button 
                       key={i} 
                       onClick={() => handleChatSubmit(undefined, suggestion)}
-                      className="p-5 border border-slate-200/80 rounded-2xl bg-neutral-900 hover:border-indigo-200 hover:shadow-[0_8px_30px_rgba(99,102,241,0.1)] transition-all text-left group"
+                      className="p-5 border border-slate-200/80 rounded-xl bg-[#18181B] hover:border-indigo-200 hover:shadow-[0_8px_30px_rgba(99,102,241,0.1)] transition-all text-left group"
                     >
-                      <p className="text-sm font-semibold text-slate-700 group-hover:text-indigo-400 transition-colors leading-snug">{suggestion}</p>
+                      <p className="text-sm font-semibold text-slate-700 group-hover:text-indigo-300 transition-colors leading-snug">{suggestion}</p>
                     </button>
                   ))}
                 </div>
@@ -525,21 +525,21 @@ export default function Home() {
                 return (
                   <div key={msg.id} className="flex max-w-[85%] gap-4 animate-in fade-in slide-in-from-bottom-2 group">
                     <div className="shrink-0 mt-1">
-                      <div className="h-8 w-8 rounded-xl bg-indigo-500/100/10 border border-indigo-500/20 flex items-center justify-center shadow-none">
-                        <Sparkles className="h-4 w-4 text-indigo-400" />
+                      <div className="h-8 w-8 rounded-xl bg-indigo-500/50/10 border border-indigo-500/10 flex items-center justify-center shadow-none">
+                        <Sparkles className="h-4 w-4 text-indigo-300" />
                       </div>
                     </div>
                     
                     <div className="flex-1 min-w-0">
                       <div className="font-bold text-sm text-neutral-100 mb-2 flex items-center gap-2">
                         FinPilot AI AI
-                        {msg.streaming && <span className="text-[9px] uppercase tracking-wider text-indigo-400 bg-indigo-500/100/10 px-2 py-0.5 rounded-md font-extrabold animate-pulse">Computing</span>}
+                        {msg.streaming && <span className="text-[9px] uppercase tracking-wider text-indigo-300 bg-indigo-500/50/10 px-2 py-0.5 rounded-md font-extrabold animate-pulse">Computing</span>}
                       </div>
 
                       <ReasoningTrace msg={msg} />
 
                       {msg.answer && (
-                          <div className="prose prose-invert prose-headings:text-neutral-100 prose-h3:text-neutral-100 prose-a:text-indigo-400 prose-p:leading-relaxed prose-li:my-1 max-w-none text-neutral-200 font-medium">
+                          <div className="prose prose-invert prose-headings:text-neutral-100 prose-h3:text-neutral-100 prose-a:text-indigo-300 prose-p:leading-relaxed prose-li:my-1 max-w-none text-neutral-200 font-medium">
                             <ReactMarkdown remarkPlugins={[remarkGfm]}>
                               {msg.answer}
                             </ReactMarkdown>
@@ -547,10 +547,10 @@ export default function Home() {
                       )}
                       
                       {!msg.answer && msg.streaming && !msg.thinking && !msg.tools.length && (
-                        <div className="mt-3 flex items-center gap-1.5 p-4 rounded-2xl border border-neutral-800 bg-neutral-900 border border-neutral-800 mb-2 w-fit">
-                          <div className="h-1.5 w-1.5 rounded-full bg-neutral-500 animate-[bounce_1s_infinite] [animation-delay:-0.3s]"></div>
-                          <div className="h-1.5 w-1.5 rounded-full bg-neutral-500 animate-[bounce_1s_infinite] [animation-delay:-0.15s]"></div>
-                          <div className="h-1.5 w-1.5 rounded-full bg-neutral-500 animate-[bounce_1s_infinite]"></div>
+                        <div className="mt-3 flex items-center gap-1.5 p-4 rounded-xl border border-white/10 bg-[#18181B] border border-white/10 mb-2 w-fit">
+                          <div className="h-1.5 w-1.5 rounded-md bg-neutral-500 animate-[bounce_1s_infinite] [animation-delay:-0.3s]"></div>
+                          <div className="h-1.5 w-1.5 rounded-md bg-neutral-500 animate-[bounce_1s_infinite] [animation-delay:-0.15s]"></div>
+                          <div className="h-1.5 w-1.5 rounded-md bg-neutral-500 animate-[bounce_1s_infinite]"></div>
                         </div>
                       )}
                     </div>
@@ -567,7 +567,7 @@ export default function Home() {
           <div className="max-w-[48rem] mx-auto px-6 relative">
             <form 
               onSubmit={(e) => handleChatSubmit(e)}
-              className="relative flex items-end bg-neutral-900 border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-300"
+              className="relative flex items-end bg-[#18181B] border border-slate-200/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-[1.5rem] focus-within:border-indigo-500 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-300"
             >
               <textarea
                 value={input}
