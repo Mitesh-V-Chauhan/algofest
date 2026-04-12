@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+yfinance
+cvxpy
+langchain
+langchain-google-genai
+stable-baselines3
+gymnasium
+numpy
+pandas
+python-dotenv
