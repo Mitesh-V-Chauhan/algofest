@@ -12,16 +12,21 @@ from langgraph.checkpoint.memory import MemorySaver
 
 from app.services.optimizer import optimize_portfolio
 from app.schemas.chat import UserProfile
-
+from app.schemas.financial import UserState, enrich_state
+from app.services.algorithms import predict_persona, future_value, monte_carlo_projection, success_probability, apply_stress
+import json
+import numpy as np
 
 SYSTEM_PROMPT = (
-    "You are an intelligent AI financial advisor. "
-    "Use tools to fetch stock prices and optimize portfolios using Markowitz optimization. "
-    "If the user shares risk tolerance, adapt accordingly: Low means higher risk aversion, "
-    "High means lower risk aversion. Explain recommendations clearly and keep responses concise. "
+    "You are an intelligent, mathematically rigorous AI financial advisor. "
+    "You MUST solve constrained financial planning problems using your algorithmic tools. "
+    "Every plan must include: risk class, optimized weights, projected corpus, success probability, downside risk. "
+    "Always present quantitative feasibility results, projections, and portfolio constraints using clear, highly usable Markdown tables. "
+    "Do NOT rely on vague paragraphs. Return concise, deterministic JSON metrics or strictly formatted tabular data alongside your qualitative answer. "
+    "Use goal_optimizer to compute feasibility gaps and risk personas based on UserState. "
     "Return your response as: "
     "<thinking>short, user-safe planning summary</thinking> "
-    "followed by <answer>final recommendation</answer>."
+    "followed by <answer>final qualitative and quantitative tabular recommendation</answer>."
 )
 
 THINKING_PATTERN = re.compile(r"<thinking>(.*?)</thinking>", re.IGNORECASE | re.DOTALL)
@@ -64,6 +69,118 @@ def run_portfolio_optimization(expected_returns: list[float], covariance: list[l
     except Exception as e:
         return f"Optimization failed: {e}"
 
+@tool
+def goal_optimizer(
+    age: int,
+    monthly_income: float,
+    monthly_expenses: float,
+    savings: float,
+    monthly_investment_capacity: float,
+    target_amount: float,
+    target_age: int,
+    risk_preference: int,
+    mu_equity: float = 0.12,
+    vol_equity: float = 0.18,
+    mu_fixed: float = 0.07,
+    vol_fixed: float = 0.04
+) -> str:
+    """
+    Computes feasibility, classification, monte carlo metrics, and returns risk profile, projected corpus, and success probability.
+    Pass user constraints natively. risk_preference: 0=low, 1=medium, 2=high.
+    Returns JSON dictionary.
+    """
+    try:
+        # Build strict UserState
+        state = UserState(
+            age=age,
+            monthly_income=monthly_income,
+            monthly_expenses=monthly_expenses,
+            savings=savings,
+            monthly_investment_capacity=monthly_investment_capacity,
+            target_amount=target_amount,
+            target_age=target_age,
+            risk_preference="high" if risk_preference == 2 else "medium" if risk_preference == 1 else "low"
+        )
+        state = enrich_state(state)
+        
+        # 1. Predict Persona
+        persona = predict_persona(
+            age=state.age,
+            horizon=state.investment_horizon,
+            savings_ratio=state.savings_ratio,
+            investment_ratio=state.investment_ratio,
+            risk_pref=risk_preference
+        )
+        
+        # 2. Portfolio Construction Logic based on persona
+        risk_aversion = 0.8 if persona == "conservative" else 0.5 if persona == "balanced" else 0.2
+        mu = [mu_equity, mu_fixed]
+        cov = [[vol_equity**2, 0.0], [0.0, vol_fixed**2]]
+        
+        alloc_res = optimize_portfolio(mu, cov, risk_aversion)
+        weights = alloc_res.get("weights", [0.5, 0.5])
+        
+        blended_mu = weights[0]*mu_equity + weights[1]*mu_fixed
+        blended_vol = np.sqrt( (weights[0]*vol_equity)**2 + (weights[1]*vol_fixed)**2 )
+
+        # 3. Monte Carlo Projection
+        paths = monte_carlo_projection(
+            initial_value=state.savings,
+            monthly_investment=state.monthly_investment_capacity,
+            mean_return=blended_mu,
+            volatility=blended_vol,
+            years=state.investment_horizon,
+            simulations=1000
+        )
+        
+        # 4. Success Probability & Corpus
+        projected_corpus = float(np.percentile(paths[:, -1], 50))
+        downside_corpus = float(np.percentile(paths[:, -1], 10))
+        prob = success_probability(paths, state.target_amount)
+        
+        result = {
+            "persona": persona,
+            "success_probability": round(prob, 2),
+            "projected_corpus": round(projected_corpus, 2),
+            "downside_risk_p10": round(downside_corpus, 2),
+            "target_gap": round(max(0, state.target_amount - projected_corpus), 2),
+            "optimized_weights": {"equity": weights[0], "fixed_income": weights[1]}
+        }
+        return json.dumps(result)
+        
+    except Exception as e:
+        return f"Optimizer engine error: {str(e)}"
+
+@tool
+def run_stress_test(
+    initial_value: float, 
+    monthly_investment: float, 
+    years: int, 
+    shock: float = -0.20,
+    mean_return: float = 0.10,
+    volatility: float = 0.15
+) -> str:
+    """
+    Applies deterministic market scenarios to investment pathways.
+    (e.g. shock=-0.20 for market crash).
+    Returns value after stress.
+    """
+    try:
+        paths = monte_carlo_projection(initial_value, monthly_investment, mean_return, volatility, years, 100)
+        baseline_median = float(np.percentile(paths[:, -1], 50))
+
+        stressed_paths = np.array([apply_stress(p, shock) for p in paths])
+        stressed_median = float(np.percentile(stressed_paths[:, -1], 50))
+
+        return json.dumps({
+            "baseline_median_corpus": round(baseline_median, 2),
+            "stressed_median_corpus": round(stressed_median, 2),
+            "shock_applied": shock,
+            "value_at_risk": round(baseline_median - stressed_median, 2)
+        })
+    except Exception as e:
+        return f"Stress test failed: {str(e)}"
+
 def _serialize_content(content: Any) -> str:
     if isinstance(content, str):
         return content
@@ -100,14 +217,31 @@ def _extract_sections(text: str) -> tuple[str, str]:
     return thinking, answer
 
 
+def route_intent(query: str) -> Optional[str]:
+    """Deterministically maps natural language intent to a specific algorithmic tool, avoiding raw LLM tool-guessing."""
+    q = query.lower()
+    if "retire" in q or "goal" in q or "plan" in q or "feasibility" in q:
+        return "goal_optimizer"
+    if "crash" in q or "stress" in q or "recession" in q or "drop" in q:
+        return "run_stress_test"
+    if "optimize" in q or "markowitz" in q or "allocate" in q:
+        return "run_portfolio_optimization"
+    if "price" in q or "stock" in q or "ticker" in q:
+        return "get_stock_price"
+    return None
+
 def _build_input_text(message: str, profile: Optional[UserProfile] = None) -> str:
+    # Pre-compute heuristic routing to force the LLM agent into a specific tool state
+    forced_tool = route_intent(message)
+    routing_instruction = f"\n[SYSTEM DIRECTIVE: Based on this query, you MUST invoke the `{forced_tool}` tool immediately before responding.]" if forced_tool else ""
+
     if not profile:
-        return message
+        return message + routing_instruction
     profile_text = (
         f"User Profile: Age={profile.age}, Income={profile.income}, "
         f"Savings={profile.savings}, Risk Tolerance={profile.risk_tolerance}. "
     )
-    return profile_text + "\nUser asks: " + message
+    return profile_text + "\nUser asks: " + message + routing_instruction
 
 
 def _as_text(value: Any, limit: int = 1200) -> str:
@@ -136,7 +270,7 @@ def _get_agent():
             llm.invoke("Return OK")
             return create_react_agent(
                 model=llm,
-                tools=[get_stock_price, run_portfolio_optimization],
+                tools=[get_stock_price, run_portfolio_optimization, goal_optimizer, run_stress_test],
                 prompt=SYSTEM_PROMPT,
                 checkpointer=MemorySaver(),
             )

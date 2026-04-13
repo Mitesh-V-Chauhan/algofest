@@ -18,3 +18,4 @@ greenlet
 pyjwt
 passlib[bcrypt]
 bcrypt
+scikit-learn
